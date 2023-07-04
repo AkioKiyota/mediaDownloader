@@ -1,5 +1,6 @@
 import tkinter as tk
 import ttkbootstrap as ttk
+from ttkbootstrap.constants import *
 import tkinter.filedialog as fd
 from tkinter.messagebox import showinfo
 
@@ -19,16 +20,16 @@ class App(tk.Tk):
         self.url_variable = tk.StringVar()
         self.url_entry = ttk.Entry(self, textvariable=self.url_variable, width=60)
         self.url_entry.insert(0, "https://www.youtube.com/watch?v=434pz9XIf_U")
-        self.url_entry.pack()
+        self.url_entry.pack(padx=10, pady=10)
 
-        self.get_video = ttk.Button(self, text='Get the video', command=self.get_video)
-        self.get_video.pack()
+        self.get_video = ttk.Button(self, text='Get the video', command=self.get_video, bootstyle=(INFO, OUTLINE))
+        self.get_video.pack(padx=10, pady=10)
 
 
     def get_video(self):
         yt = YouTube(self.url_variable.get())
         self.title = ttk.Label(self, text=yt.title)
-        self.title.pack()
+        self.title.pack(padx=10, pady=10)
 
         # add a combo box wich contains all the available streams
         values = [stream.resolution for stream in yt.streams.filter(file_extension="mp4")]
