@@ -1,5 +1,5 @@
 import tkinter as tk
-import customtkinter as ctk 
+import ttkbootstrap as ttk
 import tkinter.filedialog as fd
 from tkinter.messagebox import showinfo
 
@@ -36,24 +36,24 @@ class MoviePyProgressBar(ProgressBarLogger):
         self.pb_label['text'] = str(round(percentage, 2)) + '%'
 
 
-class App(ctk.CTk):
+class App(tk.Tk):
     def __init__(self):
         super().__init__()
 
         self.title('Media Downloader')
         self.geometry('600x450')
 
-        self.label = ctk.CTkLabel(self, text='Download Youtube videos')
+        self.label = ttk.Label(self, text='Download Youtube videos')
         self.label.pack()
 
         self.url_variable = tk.StringVar()
-        self.url_entry = ctk.CTkEntry(self, textvariable=self.url_variable, width=360)
+        self.url_entry = ttk.Entry(self, textvariable=self.url_variable, width=80)
         self.url_entry.pack(padx=5)
 
-        self.paste_btn = ctk.CTkButton(self, text='Paste', command=self.paste_string)
+        self.paste_btn = ttk.Button(self, text='Paste', command=self.paste_string)
         self.paste_btn.pack(padx=5, pady=5)
 
-        self.get_video_btn = ctk.CTkButton(self, text='Get the video', command=lambda: self.get_video_thread(self.url_variable.get()))
+        self.get_video_btn = ttk.Button(self, text='Get the video', command=lambda: self.get_video_thread(self.url_variable.get()))
         self.get_video_btn.pack(padx=5, pady=5)
 
 
@@ -73,27 +73,27 @@ class App(ctk.CTk):
 
     def get_video(self, url):
         yt = YouTube(url)
-        self.title = ctk.CTkLabel(self, text=yt.title)
+        self.title = ttk.Label(self, text=yt.title)
         self.title.pack()
 
         values = [stream.resolution for stream in yt.streams.filter(file_extension='mp4', adaptive=True).order_by('resolution').desc()]
 
-        self.streams = ctk.CTkComboBox(self, values=values, state='readonly')
+        self.streams = ttk.ComboBox(self, values=values, state='readonly')
         self.streams.current(0)
         self.streams.pack(padx=5, pady=5)
 
-        self.download_video_btn = ctk.CTkButton(self, text='Download', command=lambda: self.download_video_thread(url))
+        self.download_video_btn = ttk.Button(self, text='Download', command=lambda: self.download_video_thread(url))
         self.download_video_btn.pack(padx=5, pady=5)
 
 
     def download_video(self, url):
         
-        progress_bar = ctk.CTkProgressBar(self, 
+        progress_bar = ttk.ProgressBar(self, 
                                             mode='determinate',
                                             orient='horizontal',
                                             length=280,)
         progress_bar.pack()
-        progress_label = ctk.CTkLabel(self, text=str(progress_bar['value']))
+        progress_label = ttk.Label(self, text=str(progress_bar['value']))
         progress_label.pack()
 
         moviepy_progress_bar = MoviePyProgressBar(progress_bar, progress_label)
