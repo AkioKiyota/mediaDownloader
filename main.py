@@ -78,7 +78,7 @@ class App(tk.Tk):
 
         values = [stream.resolution for stream in yt.streams.filter(file_extension='mp4', adaptive=True).order_by('resolution').desc()]
 
-        self.streams = ttk.ComboBox(self, values=values, state='readonly')
+        self.streams = ttk.Combobox(self, values=values, state='readonly')
         self.streams.current(0)
         self.streams.pack(padx=5, pady=5)
 
@@ -88,7 +88,7 @@ class App(tk.Tk):
 
     def download_video(self, url):
         
-        progress_bar = ttk.ProgressBar(self, 
+        progress_bar = ttk.Progressbar(self, 
                                             mode='determinate',
                                             orient='horizontal',
                                             length=280,)
