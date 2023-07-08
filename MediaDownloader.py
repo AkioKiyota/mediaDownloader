@@ -81,9 +81,20 @@ class App(tk.Tk):
         yt = YouTube(url)
         title = Video_Name_Label(self.main_frame, yt.title)
 
-        values = [stream.resolution for stream in yt.streams.filter(file_extension='mp4', adaptive=True).order_by('resolution').desc()]
+        streams_list = [stream.resolution for stream in yt.streams.order_by('resolution').desc()]
+        streams_list = [*set(streams_list)]
+        values = []
+        for i in streams_list:
+            i = i[0:-1]
+            values.append(int(i))
+        
+        values.sort(reverse=True)
+        values = [str(i) + 'p' for i in values]
+
 
         streams = Resolution_ComboBox(self.main_frame, values)
+        core_count_label = Core_Count_Label(self.main_frame)
+        core_count_entry = Core_Count_Entry(self.main_frame)
         download_video_btn = Download_Video_Button(self.main_frame, command=lambda: self.download_video_thread(url, streams.get()))
     
     def download_video_button_func(self, url, resolution):
@@ -103,23 +114,57 @@ class App(tk.Tk):
         dir = fd.askdirectory()
         temp = os.path.join(os.getcwd(), 'media_Downlaoder_temp')
 
+        raw_streams = yt.streams.filter(resolution=resolution).desc()
+        if len(raw_streams) == 1:
+            stream = raw_streams.first()
+            if stream.default_filename.endswith(".webm"):
+                stream.download(output_path=dir, filename=stream.title.replace(BANNED_CHARACTERS, '')+'.webm')
+            elif stream.default_filename.endswith(".mp4"):
+                if stream.is_progressive:
+                    stream.download(output_path=dir, filename=stream.title.replace(BANNED_CHARACTERS, '')+'.mp4')
+                else:
 
-        video_stream = yt.streams.filter(file_extension='mp4', adaptive=True, resolution=resolution).first()
-        video = video_stream.download(filename=f"video_of_{video_stream.title}.mp4", output_path=temp)
-        audio_stream = yt.streams.filter(only_audio=True).first()
-        audio = audio_stream.download(filename=f"audio_of_{audio_stream.title}.mp4", output_path=temp)
+                    video_stream = yt.streams.filter(file_extension='mp4', adaptive=True, resolution=resolution).first()
+                    video = video_stream.download(filename=f"video_of_{video_stream.title.replace(BANNED_CHARACTERS, '')}.mp4", output_path=temp)
+                    audio_stream = yt.streams.filter(only_audio=True).first()
+                    audio = audio_stream.download(filename=f"audio_of_{audio_stream.title.replace(BANNED_CHARACTERS, '')}.mp4", output_path=temp)
+
+                    video = VideoFileClip(video)
+                    audio = AudioFileClip(audio)
+
+                    final_video = video.set_audio(audio)
+                    final_video.write_videofile(os.path.join(dir, f"{video_stream.title.replace(BANNED_CHARACTERS, '')}.mp4"))
+
+                    shutil.rmtree(temp, ignore_errors=True)
+                    progress_bar.destroy()
+                    progress_label.destroy()
+                    showinfo(title='Information', message=yt.title + ' has been downloaded successfully!')
         
-        video = VideoFileClip(video)
-        audio = AudioFileClip(audio)
+        if len(raw_streams) > 1:
+            stream = raw_streams.order_by('fps').desc().first()
+            if stream.default_filename.endswith(".webm"):
+                stream.download(output_path=dir, filename=stream.title.replace(BANNED_CHARACTERS, '')+'.webm')
+            elif stream.default_filename.endswith(".mp4"):
+                if stream.is_progressive:
+                    stream.download(output_path=dir, filename=stream.title.replace(BANNED_CHARACTERS, '')+'.mp4')
+                else:
 
-        final_video = video.set_audio(audio)
-        final_video.write_videofile(os.path.join(dir, yt.title + ".mp4"), logger=moviepy_progress_bar, threads=4, fps=24)
+                    video_stream = yt.streams.filter(file_extension='mp4', adaptive=True, resolution=resolution).first()
+                    video = video_stream.download(filename=f"video_of_{video_stream.title.replace(BANNED_CHARACTERS, '')}.mp4", output_path=temp)
+                    audio_stream = yt.streams.filter(only_audio=True).first()
+                    audio = audio_stream.download(filename=f"audio_of_{audio_stream.title.replace(BANNED_CHARACTERS, '')}.mp4", output_path=temp)
 
-        shutil.rmtree(temp, ignore_errors=True)
-        progress_bar.destroy()
-        progress_label.destroy()
+                    video = VideoFileClip(video)
+                    audio = AudioFileClip(audio)
 
-        showinfo(title='Information', message=yt.title + ' has been downloaded successfully!')
+                    final_video = video.set_audio(audio)
+                    final_video.write_videofile(os.path.join(dir, f"{video_stream.title.replace(BANNED_CHARACTERS, '')}.mp4"))
+
+                    shutil.rmtree(temp, ignore_errors=True)
+                    progress_bar.destroy()
+                    progress_label.destroy()
+                    showinfo(title='Information', message=yt.title + ' has been downloaded successfully!')
+
 
 # FRAMES
 class Main_Frame(ttk.Frame):
@@ -169,7 +214,20 @@ class Resolution_ComboBox(ttk.Combobox):
         super().__init__(master, values=values, state="readonly")
         self.master = master
         self.current(0)
-        self.grid(row=3, column=0, columnspan=8, sticky="w", padx=15)
+        self.grid(row=3, column=0, columnspan=2, sticky="w", padx=15)
+
+class Core_Count_Label(ttk.Label):
+    def __init__(self, master):
+        super().__init__(master, text="Core Count:\n(improves download speed \non progressive videos)", anchor="center")
+        self.master = master
+        self.grid(row=3, column=2, columnspan=3, sticky="e", padx=15)
+
+class Core_Count_Entry(ttk.Entry):
+    def __init__(self, master):
+        super().__init__(master, width=10)
+        self.master = master
+        self.insert(0, "1")
+        self.grid(row=3, column=5, columnspan=3, sticky="w", padx=15)
 
 class Download_Video_Button(ttk.Button):
     def __init__(self, master, command):
@@ -185,4 +243,3 @@ class ProgressBar(ttk.Progressbar):
 
 if __name__ == "__main__":
     app = App()
-
